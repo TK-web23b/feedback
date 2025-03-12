@@ -2,6 +2,7 @@ import express from 'express';
 import mysql from 'mysql2/promise';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bodyParser from 'body-parser';
 
 const port = 3000;
 const host = 'localhost';
@@ -22,6 +23,8 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Lisätään staattisten tiedostojen palvelu
 app.use('/includes', express.static(path.join(__dirname, 'includes')));
+
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Reitti, joka ohjaa juuriosoitteen (/) asiakkaat ja käyttäjät sivulle
 app.get('/', (req, res) => {
@@ -122,6 +125,56 @@ app.get('/support-tickets', async (req, res) => {
     });
     const [tickets] = await connection.execute('SELECT * FROM support_ticket');
     res.render('support-tickets', { tickets });
+  } catch (err) {
+    console.error('Database error:', err.message, 'Errno:', err.errno, 'SQL State:', err.sqlState);
+    res.status(500).send('Internal Server Error');
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+// Reitti, joka renderöi yksittäisen tukipyynnön sivun EJS:n avulla
+app.get('/support-ticket/:id', async (req, res) => {
+  let connection;
+  try {
+    const id = parseInt(req.params.id);
+    connection = await mysql.createConnection({
+      host: dbHost,
+      user: dbUser,
+      password: dbPwd,
+      database: dbName,
+    });
+    const [ticketRows] = await connection.execute('SELECT * FROM support_ticket WHERE id = ?', [id]);
+    const [messageRows] = await connection.execute('SELECT * FROM support_message WHERE ticket_id = ?', [id]);
+    if (ticketRows.length === 0) {
+      res.status(404).send('Ticket not found');
+      return;
+    }
+    console.log('Ticket:', ticketRows[0]);
+    console.log('Messages:', messageRows);
+    res.render('support-ticket', { ticket: ticketRows[0], messages: messageRows });
+  } catch (err) {
+    console.error('Database error:', err.message, 'Errno:', err.errno, 'SQL State:', err.sqlState);
+    res.status(500).send('Internal Server Error');
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+// Reitti, joka käsittelee tukipyynnön vastauksen
+app.post('/support-ticket/:id/reply', async (req, res) => {
+  let connection;
+  try {
+    const id = parseInt(req.params.id);
+    const { body } = req.body;
+    connection = await mysql.createConnection({
+      host: dbHost,
+      user: dbUser,
+      password: dbPwd,
+      database: dbName,
+    });
+    await connection.execute('INSERT INTO support_message (ticket_id, from_user, body) VALUES (?, ?, ?)', [id, 1, body]); // Assuming admin user ID is 1
+    res.redirect(`/support-ticket/${id}`);
   } catch (err) {
     console.error('Database error:', err.message, 'Errno:', err.errno, 'SQL State:', err.sqlState);
     res.status(500).send('Internal Server Error');

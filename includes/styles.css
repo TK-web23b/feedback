@@ -67,3 +67,43 @@ td:last-child {
     text-align: center;
     font-weight: bold;
 }
+
+/* Styles for the support ticket page */
+.support-ticket-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+}
+
+.support-ticket-table td {
+    border: 1px solid grey;
+    padding: 0.5em;
+}
+
+.support-ticket-table td[colspan="3"] {
+    text-align: left;
+}
+
+.reply-form {
+    margin-top: 1em;
+}
+
+.reply-form textarea {
+    width: 100%;
+    padding: 0.5em;
+    font-family: inherit;
+}
+
+.reply-form button {
+    background-color: #4B0082;
+    color: white;
+    padding: 0.5em 1em;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 0.5em;
+}
+
+.reply-form button:hover {
+    background-color: #3a006b;
+}
