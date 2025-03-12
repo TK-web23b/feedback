@@ -1,25 +1,53 @@
 <%- include('partials/header') %>
-<h1>Support Tickets</h1>
-<table>
+<h1>Support Ticket <%= ticket.id %></h1>
+<table class="support-ticket-table">
+  <tr>
+    <td><strong>ID:</strong></td>
+    <td><%= ticket.id %></td>
+  </tr>
+  <tr>
+    <td><strong>Customer ID:</strong></td>
+    <td><%= ticket.customer_id %></td>
+  </tr>
+  <tr>
+    <td><strong>Description:</strong></td>
+    <td><%= ticket.description %></td>
+  </tr>
+  <tr>
+    <td><strong>Handled:</strong></td>
+    <td><%= ticket.handled %></td>
+  </tr>
+  <tr>
+    <td><strong>Status:</strong></td>
+    <td><%= ticket.status %></td>
+  </tr>
+</table>
+
+<h2>Messages</h2>
+<table class="support-ticket-table">
   <thead>
     <tr>
       <th>ID</th>
-      <th>Customer ID</th>
-      <th>Description</th>
-      <th>Handled</th>
-      <th>Status</th>
+      <th>Created At</th>
+      <th>From User</th>
+      <th>Body</th>
     </tr>
   </thead>
   <tbody>
-    <% tickets.forEach(ticket => { %>
+    <% messages.forEach(message => { %>
       <tr>
-        <td><a href="/support-ticket/<%= ticket.id %>"><%= ticket.id %></a></td>
-        <td><%= ticket.customer_id %></td>
-        <td><%= ticket.description %></td>
-        <td><%= ticket.handled %></td>
-        <td><%= ticket.status %></td>
+        <td><%= message.id %></td>
+        <td><%= message.created_at %></td>
+        <td><%= message.from_user %></td>
+        <td><%= message.body %></td>
       </tr>
     <% }) %>
   </tbody>
 </table>
+
+<h2>Reply</h2>
+<form class="reply-form" action="/support-ticket/<%= ticket.id %>/reply" method="post">
+  <textarea name="body" rows="4" required></textarea>
+  <button type="submit">Send Reply</button>
+</form>
 <%- include('partials/footer') %>
