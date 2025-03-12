@@ -1,0 +1,45 @@
+<%- include('partials/header') %>
+<h1>Customers & Users</h1>
+<h2>Customers</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% customers.forEach(customer => { %>
+      <tr>
+        <td><%= customer.id %></td>
+        <td><%= customer.name %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+<h2>Users</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Full Name</th>
+      <th>Email</th>
+      <th>Mailing List</th>
+      <th>Customer ID</th>
+      <th>Admin</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% users.forEach(user => { %>
+      <tr>
+        <td><%= user.id %></td>
+        <td><%= user.fullname %></td>
+        <td><%= user.email %></td>
+        <td><%= user.mailing_list %></td>
+        <td><%= user.customer_id %></td>
+        <td><%= user.admin %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+<%- include('partials/footer') %>

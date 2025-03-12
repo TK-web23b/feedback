@@ -1,0 +1,17 @@
+{
+  "name": "feedback-support",
+  "version": "1.0.0",
+  "description": "Feedback support system",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.13.0"
+  }
+}

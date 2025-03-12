@@ -1,0 +1,29 @@
+<%- include('partials/header') %>
+<h1>Feedback</h1>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Arrived</th>
+      <th>From User</th>
+      <th>Guest Name</th>
+      <th>Guest Email</th>
+      <th>Feedback</th>
+      <th>Handled</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% rows.forEach(feedback => { %>
+      <tr>
+        <td><%= feedback.id %></td>
+        <td><%= feedback.arrived %></td>
+        <td><%= feedback.from_user %></td>
+        <td><%= feedback.guest_name %></td>
+        <td><%= feedback.guest_email %></td>
+        <td><%= feedback.feedback %></td>
+        <td><%= feedback.handled %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+<%- include('partials/footer') %>
