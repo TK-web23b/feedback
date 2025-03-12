@@ -19,7 +19,15 @@
   </tr>
   <tr>
     <td><strong>Status:</strong></td>
-    <td><%= ticket.status %></td>
+    <td>
+      <form action="/support-ticket/<%= ticket.id %>/status" method="post">
+        <select name="status" onchange="this.form.submit()">
+          <% statuses.forEach(status => { %>
+            <option value="<%= status.id %>" <%= status.id === ticket.status ? 'selected' : '' %>><%= status.description %></option>
+          <% }) %>
+        </select>
+      </form>
+    </td>
   </tr>
 </table>
 
