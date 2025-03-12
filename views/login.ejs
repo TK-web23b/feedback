@@ -1,0 +1,12 @@
+<%- include('partials/header') %>
+<h1>Login</h1>
+<form action="/login" method="post">
+  <label for="identifier">Anna ID tai sähköposti:</label>
+  <input type="text" id="identifier" name="identifier" required>
+  <br>
+  <% if (typeof error !== 'undefined') { %>
+    <p style="color: red;"><%= error %></p>
+  <% } %>
+  <button type="submit">Login</button>
+</form>
+<%- include('partials/footer') %>

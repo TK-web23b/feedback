@@ -3,6 +3,7 @@ import mysql from 'mysql2/promise';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
+import session from 'express-session';
 
 const port = 3000;
 const host = 'localhost';
@@ -23,11 +24,75 @@ app.use('/includes', express.static(path.join(__dirname, 'includes')));
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use(session({
+  secret: 'your_secret_key',
+  resave: false,
+  saveUninitialized: true,
+}));
+
+// Middleware to check if user is authenticated
+function isAuthenticated(req, res, next) {
+  if (req.session.user) {
+    return next();
+  } else {
+    res.redirect('/login');
+  }
+}
+
+// Middleware to check if user is admin
+function isAdmin(req, res, next) {
+  if (req.session.user && req.session.user.admin) {
+    return next();
+  } else {
+    res.redirect('/login');
+  }
+}
+
+
+app.use((req, res, next) => {
+  res.locals.user = req.session.user;
+  next();
+});
+
 app.get('/', (req, res) => {
   res.redirect('/customers-users');
 });
 
-app.get('/api/feedback', async (req, res) => {
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
+app.post('/login', async (req, res) => {
+  const { identifier } = req.body;
+  let connection;
+  try {
+    connection = await mysql.createConnection({
+      host: dbHost,
+      user: dbUser,
+      password: dbPwd,
+      database: dbName,
+    });
+    const [rows] = await connection.execute('SELECT * FROM system_user WHERE id = ? OR email = ?', [identifier, identifier]);
+    if (rows.length > 0 && rows[0].admin) {
+      req.session.user = rows[0];
+      res.redirect('/customers-users');
+    } else {
+      res.render('login', { error: 'Virheelliset tunnistetiedot tai ei järjestelmänvalvoja' });
+    }
+  } catch (err) {
+    console.error('Database error:', err.message, 'Errno:', err.errno, 'SQL State:', err.sqlState);
+    res.status(500).send('Internal Server Error');
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/login');
+});
+
+app.get('/api/feedback', isAuthenticated, async (req, res) => {
   let connection;
   try {
     connection = await mysql.createConnection({
@@ -46,7 +111,7 @@ app.get('/api/feedback', async (req, res) => {
   }
 });
 
-app.get('/api/feedback/:id', async (req, res) => {
+app.get('/api/feedback/:id', isAuthenticated, async (req, res) => {
   let connection;
   try {
     const id = parseInt(req.params.id);
@@ -66,7 +131,7 @@ app.get('/api/feedback/:id', async (req, res) => {
   }
 });
 
-app.get('/feedback', async (req, res) => {
+app.get('/feedback', isAuthenticated, async (req, res) => {
   let connection;
   try {
     connection = await mysql.createConnection({
@@ -85,7 +150,7 @@ app.get('/feedback', async (req, res) => {
   }
 });
 
-app.get('/customers-users', async (req, res) => {
+app.get('/customers-users', isAuthenticated, async (req, res) => {
   let connection;
   try {
     connection = await mysql.createConnection({
@@ -105,7 +170,7 @@ app.get('/customers-users', async (req, res) => {
   }
 });
 
-app.get('/support-tickets', async (req, res) => {
+app.get('/support-tickets', isAuthenticated, async (req, res) => {
   let connection;
   try {
     connection = await mysql.createConnection({
@@ -124,7 +189,7 @@ app.get('/support-tickets', async (req, res) => {
   }
 });
 
-app.get('/support-ticket/:id', async (req, res) => {
+app.get('/support-ticket/:id', isAuthenticated, async (req, res) => {
   let connection;
   try {
     const id = parseInt(req.params.id);
@@ -152,7 +217,7 @@ app.get('/support-ticket/:id', async (req, res) => {
   }
 });
 
-app.post('/support-ticket/:id/reply', async (req, res) => {
+app.post('/support-ticket/:id/reply', isAuthenticated, async (req, res) => {
   let connection;
   try {
     const id = parseInt(req.params.id);
@@ -173,7 +238,7 @@ app.post('/support-ticket/:id/reply', async (req, res) => {
   }
 });
 
-app.post('/support-ticket/:id/status', async (req, res) => {
+app.post('/support-ticket/:id/status', isAuthenticated, async (req, res) => {
   let connection;
   try {
     const id = parseInt(req.params.id);
