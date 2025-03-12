@@ -189,4 +189,22 @@ app.use((err, req, res, next) => {
   res.status(500).send('Internal Server Error');
 });
 
-app.listen(port, host, () => console.log(`${host}:${port} kuuntelee...`));
+async function createDatabaseIfNotExists() {
+  let connection;
+  try {
+    connection = await mysql.createConnection({
+      host: dbHost,
+      user: dbUser,
+      password: dbPwd,
+    });
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\`;`);
+  } catch (err) {
+    console.error('Database creation error:', err.message);
+  } finally {
+    if (connection) await connection.end();
+  }
+}
+
+createDatabaseIfNotExists().then(() => {
+  app.listen(port, host, () => console.log(`${host}:${port} kuuntelee...`));
+});
