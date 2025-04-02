@@ -4,9 +4,20 @@
   <label for="identifier">Anna ID tai sähköposti:</label>
   <input type="text" id="identifier" name="identifier" required>
   <br>
+  <label for="password">Salasana:</label>
+  <input type="password" id="password" name="password" required>
+  <button type="button" onclick="togglePasswordVisibility()">Näytä</button>
+  <br>
   <% if (typeof error !== 'undefined') { %>
     <p style="color: red;"><%= error %></p>
   <% } %>
   <button type="submit">Login</button>
 </form>
+<script>
+  function togglePasswordVisibility() {
+    const passwordField = document.getElementById('password');
+    const type = passwordField.type === 'password' ? 'text' : 'password';
+    passwordField.type = type;
+  }
+</script>
 <%- include('partials/footer') %>

@@ -32,7 +32,7 @@
   <tbody>
     <% users.forEach(user => { %>
       <tr>
-        <td><%= user.id %></td>
+        <td><a href="/user/<%= user.id %>"><%= user.id %></a></td>
         <td><%= user.fullname %></td>
         <td><%= user.email %></td>
         <td><%= user.mailing_list %></td>

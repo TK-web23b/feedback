@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
 import session from 'express-session';
+import bcrypt from 'bcrypt';
 
 const port = 3000;
 const host = 'localhost';
@@ -63,7 +64,7 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { identifier } = req.body;
+  const { identifier, password } = req.body;
   let connection;
   try {
     connection = await mysql.createConnection({
@@ -73,14 +74,18 @@ app.post('/login', async (req, res) => {
       database: dbName,
     });
     const [rows] = await connection.execute('SELECT * FROM system_user WHERE id = ? OR email = ?', [identifier, identifier]);
-    if (rows.length > 0 && rows[0].admin) {
-      req.session.user = rows[0];
-      res.redirect('/customers-users');
-    } else {
-      res.render('login', { error: 'Virheelliset tunnistetiedot tai ei järjestelmänvalvoja' });
+    if (rows.length > 0) {
+      const user = rows[0];
+      const passwordMatch = await bcrypt.compare(password, user.password || '');
+      if (passwordMatch && user.admin) {
+        req.session.user = user;
+        res.redirect('/customers-users');
+        return;
+      }
     }
+    res.render('login', { error: 'Virheelliset tunnistetiedot tai ei järjestelmänvalvoja' });
   } catch (err) {
-    console.error('Database error:', err.message, 'Errno:', err.errno, 'SQL State:', err.sqlState);
+    console.error('Database error:', err.message);
     res.status(500).send('Internal Server Error');
   } finally {
     if (connection) await connection.end();
@@ -254,6 +259,61 @@ app.post('/support-ticket/:id/status', isAuthenticated, async (req, res) => {
     res.redirect(`/support-ticket/${id}`);
   } catch (err) {
     console.error('Database error:', err.message, 'Errno:', err.errno, 'SQL State:', err.sqlState);
+    res.status(500).send('Internal Server Error');
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+app.get('/user/:id', isAuthenticated, async (req, res) => {
+  let connection;
+  try {
+    const id = parseInt(req.params.id);
+    connection = await mysql.createConnection({
+      host: dbHost,
+      user: dbUser,
+      password: dbPwd,
+      database: dbName,
+    });
+    const [rows] = await connection.execute('SELECT * FROM system_user WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      res.status(404).send('User not found');
+      return;
+    }
+    res.render('user', { user: rows[0] });
+  } catch (err) {
+    console.error('Database error:', err.message);
+    res.status(500).send('Internal Server Error');
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+app.post('/user/:id', isAuthenticated, async (req, res) => {
+  let connection;
+  try {
+    const id = parseInt(req.params.id);
+    const { fullname, email, mailing_list, customer_id, admin, password } = req.body;
+    connection = await mysql.createConnection({
+      host: dbHost,
+      user: dbUser,
+      password: dbPwd,
+      database: dbName,
+    });
+
+    let query = 'UPDATE system_user SET fullname = ?, email = ?, mailing_list = ?, customer_id = ?, admin = ? WHERE id = ?';
+    const params = [fullname, email, mailing_list === 'true', customer_id || null, admin === 'true', id];
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      query = 'UPDATE system_user SET fullname = ?, email = ?, mailing_list = ?, customer_id = ?, admin = ?, password = ? WHERE id = ?';
+      params.splice(5, 0, hashedPassword);
+    }
+
+    await connection.execute(query, params);
+    res.redirect(`/user/${id}`);
+  } catch (err) {
+    console.error('Database error:', err.message);
     res.status(500).send('Internal Server Error');
   } finally {
     if (connection) await connection.end();

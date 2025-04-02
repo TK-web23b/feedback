@@ -1,0 +1,24 @@
+<%- include('partials/header') %>
+<h1>User Details</h1>
+<form action="/user/<%= user.id %>" method="post">
+  <label for="fullname">Full Name:</label>
+  <input type="text" id="fullname" name="fullname" value="<%= user.fullname %>" required>
+  <br>
+  <label for="email">Email:</label>
+  <input type="email" id="email" name="email" value="<%= user.email %>" required>
+  <br>
+  <label for="mailing_list">Mailing List:</label>
+  <input type="checkbox" id="mailing_list" name="mailing_list" value="true" <%= user.mailing_list ? 'checked' : '' %>>
+  <br>
+  <label for="customer_id">Customer ID:</label>
+  <input type="number" id="customer_id" name="customer_id" value="<%= user.customer_id %>">
+  <br>
+  <label for="admin">Admin:</label>
+  <input type="checkbox" id="admin" name="admin" value="true" <%= user.admin ? 'checked' : '' %>>
+  <br>
+  <label for="password">Password:</label>
+  <input type="password" id="password" name="password">
+  <br>
+  <button type="submit">Save</button>
+</form>
+<%- include('partials/footer') %>
