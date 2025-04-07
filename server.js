@@ -31,7 +31,7 @@ app.use(session({
   saveUninitialized: true,
 }));
 
-// Middleware to check if user is authenticated
+// Middleware tarkistaa, onko käyttäjä kirjautunut sisään
 function isAuthenticated(req, res, next) {
   if (req.session.user) {
     return next();
@@ -40,7 +40,7 @@ function isAuthenticated(req, res, next) {
   }
 }
 
-// Middleware to check if user is admin
+// Middleware tarkistaa, onko käyttäjä järjestelmänvalvoja
 function isAdmin(req, res, next) {
   if (req.session.user && req.session.user.admin) {
     return next();
@@ -49,20 +49,23 @@ function isAdmin(req, res, next) {
   }
 }
 
-
+// Lisää käyttäjäistunto paikallisiin muuttujille
 app.use((req, res, next) => {
   res.locals.user = req.session.user;
   next();
 });
 
+// Ohjaa pääsivu asiakas- ja käyttäjälistaukseen
 app.get('/', (req, res) => {
   res.redirect('/customers-users');
 });
 
+// Kirjautumissivu
 app.get('/login', (req, res) => {
   res.render('login');
 });
 
+// Käsittele kirjautumispyyntö
 app.post('/login', async (req, res) => {
   const { identifier, password } = req.body;
   let connection;
@@ -77,6 +80,7 @@ app.post('/login', async (req, res) => {
     if (rows.length > 0) {
       const user = rows[0];
       const passwordMatch = await bcrypt.compare(password, user.password || '');
+      // Tarkista, täsmääkö salasana ja onko käyttäjä järjestelmänvalvoja
       if (passwordMatch && user.admin) {
         req.session.user = user;
         res.redirect('/customers-users');
@@ -92,11 +96,13 @@ app.post('/login', async (req, res) => {
   }
 });
 
+// Kirjaa käyttäjä ulos
 app.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/login');
 });
 
+// Hae kaikki palautteet API:n kautta
 app.get('/api/feedback', isAuthenticated, async (req, res) => {
   let connection;
   try {
@@ -116,6 +122,7 @@ app.get('/api/feedback', isAuthenticated, async (req, res) => {
   }
 });
 
+// Hae yksittäinen palaute API:n kautta
 app.get('/api/feedback/:id', isAuthenticated, async (req, res) => {
   let connection;
   try {
@@ -136,6 +143,7 @@ app.get('/api/feedback/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+// Näytä palautesivu
 app.get('/feedback', isAuthenticated, async (req, res) => {
   let connection;
   try {
@@ -155,6 +163,7 @@ app.get('/feedback', isAuthenticated, async (req, res) => {
   }
 });
 
+// Näytä asiakkaat ja käyttäjät
 app.get('/customers-users', isAuthenticated, async (req, res) => {
   let connection;
   try {
@@ -175,6 +184,7 @@ app.get('/customers-users', isAuthenticated, async (req, res) => {
   }
 });
 
+// Näytä tukipyynnöt
 app.get('/support-tickets', isAuthenticated, async (req, res) => {
   let connection;
   try {
@@ -194,6 +204,7 @@ app.get('/support-tickets', isAuthenticated, async (req, res) => {
   }
 });
 
+// Näytä yksittäinen tukipyyntö
 app.get('/support-ticket/:id', isAuthenticated, async (req, res) => {
   let connection;
   try {
@@ -222,6 +233,7 @@ app.get('/support-ticket/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+// Lisää vastaus tukipyyntöön
 app.post('/support-ticket/:id/reply', isAuthenticated, async (req, res) => {
   let connection;
   try {
@@ -243,6 +255,7 @@ app.post('/support-ticket/:id/reply', isAuthenticated, async (req, res) => {
   }
 });
 
+// Päivitä tukipyynnön tila
 app.post('/support-ticket/:id/status', isAuthenticated, async (req, res) => {
   let connection;
   try {
@@ -265,6 +278,7 @@ app.post('/support-ticket/:id/status', isAuthenticated, async (req, res) => {
   }
 });
 
+// Näytä yksittäisen käyttäjän tiedot
 app.get('/user/:id', isAuthenticated, async (req, res) => {
   let connection;
   try {
@@ -289,6 +303,7 @@ app.get('/user/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+// Päivitä käyttäjän tiedot
 app.post('/user/:id', isAuthenticated, async (req, res) => {
   let connection;
   try {
@@ -320,11 +335,13 @@ app.post('/user/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+// Käsittele palvelinvirheet
 app.use((err, req, res, next) => {
-  console.error('Internal Server Error:', err);
-  res.status(500).send('Internal Server Error');
+  console.error('Sisäinen palvelinvirhe:', err);
+  res.status(500).send('Sisäinen palvelinvirhe');
 });
 
+// Luo tietokanta, jos sitä ei ole olemassa
 async function createDatabaseIfNotExists() {
   let connection;
   try {
@@ -341,6 +358,7 @@ async function createDatabaseIfNotExists() {
   }
 }
 
+// Käynnistä palvelin
 createDatabaseIfNotExists().then(() => {
   app.listen(port, host, () => console.log(`${host}:${port} kuuntelee...`));
 });
